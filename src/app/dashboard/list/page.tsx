@@ -16,7 +16,9 @@ import { toast } from "@/components/ui/toast";
 import {
   addInflow,
   addOutflow,
+  deleteAttachmentFile,
   DENOMINATIONS,
+  getAttachmentUrl,
   getEmployee,
   getKategoriUtama,
   getLedger,
@@ -138,6 +140,11 @@ export default function ListPencatatanPage() {
     setReceiptNo("");
     setQuantities({});
     setAttachment(null);
+  };
+
+  const clearForm = () => {
+    if (attachment?.filePath) void deleteAttachmentFile(attachment.filePath);
+    reset();
   };
 
   const submit = async () => {
@@ -272,10 +279,17 @@ export default function ListPencatatanPage() {
   };
   const saveEvidence = async () => {
     if (!evidenceTarget) return;
+    const old = evidenceTarget.current;
+    const next = evidenceAttachment;
+    if (evidenceTarget.isDelete) {
+      await deleteAttachmentFile(old?.filePath);
+    } else if (old?.filePath && (!next || old.id !== next.id)) {
+      await deleteAttachmentFile(old.filePath);
+    }
     const result =
       evidenceTarget.kind === "in"
-        ? await updateInflowEvidence(evidenceTarget.id, evidenceAttachment)
-        : await updateOutflowEvidence(evidenceTarget.id, evidenceAttachment);
+        ? await updateInflowEvidence(evidenceTarget.id, evidenceTarget.isDelete ? null : next)
+        : await updateOutflowEvidence(evidenceTarget.id, evidenceTarget.isDelete ? null : next);
     if (!result.ok) {
       toast(result.error ?? "Gagal menyimpan evidence", "error");
       return;
@@ -465,7 +479,7 @@ export default function ListPencatatanPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3">
-                <Button variant="outline" onClick={reset}>
+                <Button variant="outline" onClick={clearForm}>
                   Bersihkan
                 </Button>
                 <Button onClick={submit} disabled={!canSubmit}>
@@ -704,12 +718,12 @@ export default function ListPencatatanPage() {
             {preview.type.startsWith("image/") ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={preview.dataUrl}
+                src={getAttachmentUrl(preview)}
                 alt={preview.name}
                 className="max-h-96 w-full rounded-lg object-contain ring-1 ring-slate-200"
               />
             ) : (
-              <iframe src={preview.dataUrl} title={preview.name} className="h-96 w-full rounded-lg" />
+              <iframe src={getAttachmentUrl(preview)} title={preview.name} className="h-96 w-full rounded-lg" />
             )}
           </div>
         )}

@@ -45,7 +45,8 @@ export interface Attachment {
   name: string;
   type: string;
   size: number;
-  dataUrl: string;
+  filePath: string;
+  dataUrl?: string;
 }
 
 export interface CashInflow {

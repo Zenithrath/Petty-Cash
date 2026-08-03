@@ -56,7 +56,10 @@ export default function KasFisikPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Kas Fisik" />
+      <PageHeader
+        title="Kas Fisik"
+        description="Otomatis mengikuti transaksi masuk/keluar. Ubah jumlah untuk penyesuaian hitung fisik."
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard

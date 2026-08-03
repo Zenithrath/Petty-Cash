@@ -4,6 +4,7 @@ import * as React from "react";
 import { FileText, ImageIcon, Paperclip, X } from "lucide-react";
 import type { Attachment } from "@/types";
 import { cn } from "@/lib/utils";
+import { getAttachmentUrl, uploadAttachment } from "@/lib/store";
 
 const MAX_SIZE = 2 * 1024 * 1024;
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp", "application/pdf"];
@@ -22,8 +23,9 @@ function formatSize(bytes: number): string {
 export function AttachmentInput({ value, onChange, disabled }: AttachmentInputProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState("");
+  const [uploading, setUploading] = React.useState(false);
 
-  const handleFile = (file: File | undefined | null) => {
+  const handleFile = async (file: File | undefined | null) => {
     if (!file) return;
     if (!ACCEPTED.includes(file.type)) {
       setError("Hanya file gambar (PNG/JPG/WebP) atau PDF yang diizinkan.");
@@ -34,20 +36,21 @@ export function AttachmentInput({ value, onChange, disabled }: AttachmentInputPr
       return;
     }
     setError("");
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange({
-        id: `att-${Date.now()}`,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        dataUrl: String(reader.result),
-      });
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const result = await uploadAttachment(file);
+      if (!result.ok || !result.attachment) {
+        setError(result.error ?? "Gagal mengupload file");
+        return;
+      }
+      onChange(result.attachment);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const isImage = value?.type.startsWith("image/");
+  const previewUrl = value ? getAttachmentUrl(value) : "";
 
   return (
     <div className="space-y-2">
@@ -55,7 +58,7 @@ export function AttachmentInput({ value, onChange, disabled }: AttachmentInputPr
         ref={inputRef}
         type="file"
         accept=".png,.jpg,.jpeg,.webp,.pdf"
-        disabled={disabled}
+        disabled={disabled || uploading}
         className="hidden"
         onChange={(e) => {
           handleFile(e.target.files?.[0]);
@@ -73,7 +76,7 @@ export function AttachmentInput({ value, onChange, disabled }: AttachmentInputPr
           {isImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={value.dataUrl}
+              src={previewUrl}
               alt={value.name}
               className="h-10 w-10 rounded-md object-cover ring-1 ring-slate-200"
             />
@@ -98,7 +101,7 @@ export function AttachmentInput({ value, onChange, disabled }: AttachmentInputPr
       ) : (
         <button
           type="button"
-          disabled={disabled}
+          disabled={disabled || uploading}
           onClick={() => inputRef.current?.click()}
           className={cn(
             "flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-3 text-sm text-slate-500",
@@ -107,7 +110,7 @@ export function AttachmentInput({ value, onChange, disabled }: AttachmentInputPr
           )}
         >
           <Paperclip className="h-4 w-4" />
-          Lampirkan bukti / nota (satu file, maks 2 MB)
+          {uploading ? "Mengunggah…" : "Lampirkan bukti / nota (satu file, maks 2 MB)"}
         </button>
       )}
 

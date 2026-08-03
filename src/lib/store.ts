@@ -42,7 +42,7 @@ export interface DbState {
   inflowDetails: InflowDetail[];
   outflows: CashOutflow[];
   outflowDetails: OutflowDetail[];
-  kasFisikOverrides: Record<string, number>;
+  kasFisikOverrides: Record<string, { quantity: number; updatedAt: string }>;
 }
 
 const emptyState = (): DbState => ({
@@ -374,9 +374,12 @@ export async function hydrate() {
   const outDetData = pickData(outDetRes);
   const kasData = pickData(kasRes);
 
-  const kasFisikOverrides: Record<string, number> = {};
+  const kasFisikOverrides: DbState["kasFisikOverrides"] = {};
   for (const row of kasData) {
-    kasFisikOverrides[row.denomination_id] = row.quantity;
+    kasFisikOverrides[row.denomination_id] = {
+      quantity: row.quantity,
+      updatedAt: row.updated_at,
+    };
   }
 
   setState({
@@ -844,22 +847,65 @@ export async function updateOutflowEvidence(
   return { ok: true };
 }
 
+// ---------- Attachment / Storage ----------
+
+export async function uploadAttachment(
+  file: File
+): Promise<{ ok: boolean; attachment?: Attachment; error?: string }> {
+  const supabase = createClient();
+  const id = `att-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
+  const safeName = file.name.replace(/[^\w.\- ]+/g, "_");
+  const filePath = `${id}/${safeName}`;
+  const { error } = await supabase.storage
+    .from("bukti")
+    .upload(filePath, file, { contentType: file.type });
+  if (error) return { ok: false, error: error.message };
+  return {
+    ok: true,
+    attachment: {
+      id,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      filePath,
+    },
+  };
+}
+
+export async function deleteAttachmentFile(filePath: string | undefined): Promise<void> {
+  if (!filePath) return;
+  const supabase = createClient();
+  await supabase.storage.from("bukti").remove([filePath]);
+}
+
+export function getAttachmentUrl(attachment: Attachment): string {
+  if (attachment.filePath) {
+    return createClient().storage.from("bukti").getPublicUrl(attachment.filePath).data.publicUrl;
+  }
+  return attachment.dataUrl ?? "";
+}
+
 // ---------- Kas Fisik ----------
 
 export async function updateKasFisik(overrides: Record<string, number>): Promise<AuthResult> {
   const supabase = createClient();
+  const updatedAt = new Date().toISOString();
   const rows = Object.entries(overrides).map(([denomination_id, quantity]) => ({
     id: denomination_id,
     denomination_id,
     quantity,
-    updated_at: new Date().toISOString(),
+    updated_at: updatedAt,
     updated_by: state.currentUserId,
   }));
   const { error } = await supabase
     .from("kas_fisik")
     .upsert(rows, { onConflict: "denomination_id" });
   if (error) return { ok: false, error: error.message };
-  setState({ ...state, kasFisikOverrides: overrides });
+  const next: DbState["kasFisikOverrides"] = {};
+  for (const [denomination_id, quantity] of Object.entries(overrides)) {
+    next[denomination_id] = { quantity, updatedAt };
+  }
+  setState({ ...state, kasFisikOverrides: next });
   return { ok: true };
 }
 
@@ -923,17 +969,27 @@ export function getLedger(s: DbState): LedgerData {
 
 export function getStock(s: DbState): Map<string, number> {
   const map = new Map<string, number>();
+  const inflowCreatedAt = new Map(s.inflows.map((i) => [i.id, i.createdAt] as const));
+  const outflowCreatedAt = new Map(s.outflows.map((o) => [o.id, o.createdAt] as const));
+
+  for (const [denomId, base] of Object.entries(s.kasFisikOverrides)) {
+    map.set(denomId, base.quantity);
+  }
 
   for (const detail of s.inflowDetails) {
-    map.set(detail.denominationId, (map.get(detail.denominationId) ?? 0) + detail.quantity);
+    const base = s.kasFisikOverrides[detail.denominationId];
+    const created = inflowCreatedAt.get(detail.inflowId);
+    if (!base || (created && Date.parse(created) > Date.parse(base.updatedAt))) {
+      map.set(detail.denominationId, (map.get(detail.denominationId) ?? 0) + detail.quantity);
+    }
   }
 
   for (const detail of s.outflowDetails) {
-    map.set(detail.denominationId, Math.max(0, (map.get(detail.denominationId) ?? 0) - detail.quantity));
-  }
-
-  for (const [denomId, qty] of Object.entries(s.kasFisikOverrides)) {
-    map.set(denomId, qty);
+    const base = s.kasFisikOverrides[detail.denominationId];
+    const created = outflowCreatedAt.get(detail.outflowId);
+    if (!base || (created && Date.parse(created) > Date.parse(base.updatedAt))) {
+      map.set(detail.denominationId, Math.max(0, (map.get(detail.denominationId) ?? 0) - detail.quantity));
+    }
   }
 
   return map;
