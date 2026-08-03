@@ -420,7 +420,6 @@ export default function MasterDataPage() {
 
       {/* Dialog edit anggota */}
       <Dialog
-        key={String(!!editingEmp)}
         open={!!editingEmp}
         onClose={() => setEditingEmp(null)}
         title="Edit Anggota"
@@ -449,7 +448,6 @@ export default function MasterDataPage() {
 
       {/* Dialog hapus anggota */}
       <Dialog
-        key={String(!!deletingEmp)}
         open={!!deletingEmp}
         onClose={() => setDeletingEmp(null)}
         title="Hapus Anggota?"
@@ -484,7 +482,6 @@ export default function MasterDataPage() {
 
       {/* Dialog edit kategori utama */}
       <Dialog
-        key={String(!!editingKu)}
         open={!!editingKu}
         onClose={() => setEditingKu(null)}
         title="Edit Kategori Utama"
@@ -512,7 +509,6 @@ export default function MasterDataPage() {
 
       {/* Dialog hapus kategori utama */}
       <Dialog
-        key={String(!!deletingKu)}
         open={!!deletingKu}
         onClose={() => setDeletingKu(null)}
         title="Hapus Kategori Utama?"
@@ -547,7 +543,6 @@ export default function MasterDataPage() {
 
       {/* Dialog edit sub kategori */}
       <Dialog
-        key={String(!!editingSub)}
         open={!!editingSub}
         onClose={() => setEditingSub(null)}
         title="Edit Sub Kategori"
@@ -593,7 +588,6 @@ export default function MasterDataPage() {
 
       {/* Dialog hapus sub kategori */}
       <Dialog
-        key={String(!!deletingSub)}
         open={!!deletingSub}
         onClose={() => setDeletingSub(null)}
         title="Hapus Sub Kategori?"

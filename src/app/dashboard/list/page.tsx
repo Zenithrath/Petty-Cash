@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Download, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { Combobox } from "@/components/shared/combobox";
-import { RupiahInput } from "@/components/shared/rupiah-input";
-import { StockInput } from "@/components/shared/stock-input";
-import { AttachmentInput } from "@/components/shared/attachment-input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { toast } from "@/components/ui/toast";
@@ -36,8 +33,15 @@ import type { ListExcelRow } from "@/lib/export-excel";
 import { cn, formatDate, formatRupiah, todayIso } from "@/lib/utils";
 import type { Attachment, CashInflow, CashOutflow } from "@/types";
 
+const Combobox = dynamic(() => import("@/components/shared/combobox").then((mod) => mod.Combobox));
+const RupiahInput = dynamic(() => import("@/components/shared/rupiah-input").then((mod) => mod.RupiahInput));
+const StockInput = dynamic(() => import("@/components/shared/stock-input").then((mod) => mod.StockInput));
+const AttachmentInput = dynamic(() => import("@/components/shared/attachment-input").then((mod) => mod.AttachmentInput));
+
 type Direction = "keluar" | "masuk";
 type Tab = "semua" | "keluar" | "masuk";
+
+const ROWS_PER_PAGE = 20;
 
 interface DisplayRow {
   key: string;
@@ -170,6 +174,7 @@ export default function ListPencatatanPage() {
 
   // ---------- List state ----------
   const [tab, setTab] = React.useState<Tab>("semua");
+  const [page, setPage] = React.useState(1);
 
   const allRows = React.useMemo<DisplayRow[]>(() => {
     return ledger.rows.map((row, i) => {
@@ -226,6 +231,16 @@ export default function ListPencatatanPage() {
     if (tab === "masuk") return allRows.filter((r) => r.kind === "in");
     return allRows;
   }, [allRows, tab]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleRows.length / ROWS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const firstRow = (currentPage - 1) * ROWS_PER_PAGE;
+  const paginatedRows = visibleRows.slice(firstRow, firstRow + ROWS_PER_PAGE);
+
+  const selectTab = (nextTab: Tab) => {
+    setTab(nextTab);
+    setPage(1);
+  };
 
   // ---------- Evidence dialog ----------
   const [evidenceTarget, setEvidenceTarget] = React.useState<null | {
@@ -464,7 +479,7 @@ export default function ListPencatatanPage() {
         ]).map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => selectTab(t.id)}
             className={cn(
               "inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors",
               tab === t.id
@@ -517,7 +532,7 @@ export default function ListPencatatanPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleRows.map((r) => (
+                  {paginatedRows.map((r) => (
                     <TableRow key={r.key} className={r.kind === "in" ? "bg-emerald-50/30" : undefined}>
                       <TableCell className="text-slate-500">{r.no}</TableCell>
                       <TableCell className="whitespace-nowrap text-slate-500">
@@ -603,9 +618,40 @@ export default function ListPencatatanPage() {
         </CardContent>
       </Card>
 
+      {visibleRows.length > ROWS_PER_PAGE && (
+        <nav
+          aria-label="Pagination daftar catatan kas"
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-slate-500">
+            Menampilkan {firstRow + 1}–{Math.min(firstRow + ROWS_PER_PAGE, visibleRows.length)} dari {visibleRows.length} catatan
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+            >
+              Sebelumnya
+            </Button>
+            <span className="text-sm tabular-nums text-slate-600" aria-live="polite">
+              Halaman {currentPage} dari {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </nav>
+      )}
+
       {/* Dialog evidence */}
       <Dialog
-        key={String(!!evidenceTarget)}
         open={!!evidenceTarget}
         onClose={() => setEvidenceTarget(null)}
         title={evidenceTarget?.isDelete ? "Hapus Evidence?" : evidenceTarget?.current ? "Edit Evidence" : "Tambah Evidence"}
