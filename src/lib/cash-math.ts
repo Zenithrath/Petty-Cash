@@ -1,9 +1,10 @@
-import type { Denomination } from "@/types";
+import type { Denomination, DenominationType } from "@/types";
 
 export interface StockRow {
   denominationId: string;
   value: number;
   quantity: number;
+  type: DenominationType;
 }
 
 export interface SuggestionResult {
@@ -22,6 +23,7 @@ export function toStockRows(
       denominationId: d.id,
       value: Number(d.value),
       quantity: stockByDenom.get(d.id) ?? 0,
+      type: d.type,
     }))
     .sort((a, b) => b.value - a.value);
 }

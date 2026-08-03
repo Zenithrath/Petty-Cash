@@ -90,12 +90,6 @@ export interface OutflowDetail {
   quantity: number;
 }
 
-export interface StockRow {
-  denominationId: string;
-  value: number;
-  quantity: number;
-}
-
 export interface LedgerRow {
   kind: "in" | "out";
   amount: number;

@@ -21,7 +21,6 @@ import {
   getKategoriUtama,
   getLedger,
   getStock,
-  getState,
   getSubKategori,
   trxCodeOfSub,
   updateInflowEvidence,
@@ -73,7 +72,7 @@ export default function ListPencatatanPage() {
   const [date, setDate] = React.useState(todayIso());
   const [description, setDescription] = React.useState("");
   const [receiptNo, setReceiptNo] = React.useState("");
-  const [outQtys, setOutQtys] = React.useState<Record<string, number>>({});
+  const [quantities, setQuantities] = React.useState<Record<string, number>>({});
   const [attachment, setAttachment] = React.useState<Attachment | null>(null);
 
   const employees = state.employees.filter((e) => e.isActive);
@@ -92,14 +91,21 @@ export default function ListPencatatanPage() {
 
   const currentStock: StockRow[] = toStockRows(
     DENOMINATIONS,
-    [...getStock(getState()).entries()].map(([denominationId, quantity]) => ({
+    [...getStock(state).entries()].map(([denominationId, quantity]) => ({
       denominationId,
       quantity,
     }))
   );
 
-  const outSum = currentStock.reduce((s, r) => s + r.value * (outQtys[r.denominationId] ?? 0), 0);
-  const outMismatch = formDirection === "keluar" && nominal > 0 && outSum !== nominal;
+  const formStock = React.useMemo(() => {
+    if (formDirection === "masuk") {
+      return currentStock.map((r) => ({ ...r, quantity: Number.MAX_SAFE_INTEGER }));
+    }
+    return currentStock;
+  }, [currentStock, formDirection]);
+
+  const qtySum = currentStock.reduce((s, r) => s + r.value * (quantities[r.denominationId] ?? 0), 0);
+  const qtyMismatch = formDirection === "keluar" && nominal > 0 && qtySum !== nominal;
 
   const canSubmit =
     nominal > 0 &&
@@ -107,7 +113,8 @@ export default function ListPencatatanPage() {
     subKategoriId.length > 0 &&
     employeeId.length > 0 &&
     description.trim().length > 0 &&
-    date.length > 0;
+    date.length > 0 &&
+    !qtyMismatch;
 
   const openForm = (d: Direction) => {
     if (formDirection === d) {
@@ -118,7 +125,7 @@ export default function ListPencatatanPage() {
     setKategoriUtamaId("");
     setSubKategoriId("");
     setNominal(0);
-    setOutQtys({});
+    setQuantities({});
   };
 
   const reset = () => {
@@ -129,7 +136,7 @@ export default function ListPencatatanPage() {
     setDate(todayIso());
     setDescription("");
     setReceiptNo("");
-    setOutQtys({});
+    setQuantities({});
     setAttachment(null);
   };
 
@@ -150,7 +157,7 @@ export default function ListPencatatanPage() {
         ? await addOutflow({
             ...base,
             amountOut: nominal,
-            outStocks: Object.entries(outQtys).map(([denominationId, quantity]) => ({
+            outStocks: Object.entries(quantities).map(([denominationId, quantity]) => ({
               denominationId,
               quantity,
             })),
@@ -158,7 +165,7 @@ export default function ListPencatatanPage() {
         : await addInflow({
             ...base,
             amount: nominal,
-            stocks: Object.entries(outQtys).map(([denominationId, quantity]) => ({
+            stocks: Object.entries(quantities).map(([denominationId, quantity]) => ({
               denominationId,
               quantity,
             })),
@@ -438,15 +445,15 @@ export default function ListPencatatanPage() {
                   Rincian pecahan uang {formDirection === "keluar" ? "keluar" : "masuk"}
                 </p>
                 <StockInput
-                  rows={currentStock}
-                  quantities={outQtys}
-                  onChange={(id, q) => setOutQtys((prev) => ({ ...prev, [id]: q }))}
+                  rows={formStock}
+                  quantities={quantities}
+                  onChange={(id, q) => setQuantities((prev) => ({ ...prev, [id]: q }))}
                   showStock={formDirection === "keluar"}
                   suggestTarget={nominal}
                 />
-                {outMismatch && (
+                {qtyMismatch && (
                   <p className="mt-1.5 text-xs text-amber-600">
-                    Total pecahan ({formatRupiah(outSum)}) tidak sama dengan nominal (
+                    Total pecahan ({formatRupiah(qtySum)}) tidak sama dengan nominal (
                     {formatRupiah(nominal)}).
                   </p>
                 )}

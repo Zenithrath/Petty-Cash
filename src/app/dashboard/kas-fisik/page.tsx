@@ -24,13 +24,11 @@ export default function KasFisikPage() {
   const stock = getStock(state);
   const stockValue = getStockValue(state);
 
-  const stockRows = React.useMemo(() => {
-    const active = DENOMINATIONS.filter((d) => d.isActive);
-    return toStockRows(
-      active,
-      active.map((d) => ({ denominationId: d.id, quantity: stock.get(d.id) ?? 0 }))
-    );
-  }, [state]);
+  const active = DENOMINATIONS.filter((d) => d.isActive);
+  const stockRows = toStockRows(
+    active,
+    active.map((d) => ({ denominationId: d.id, quantity: stock.get(d.id) ?? 0 }))
+  );
 
   const [draft, setDraft] = React.useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
@@ -38,12 +36,6 @@ export default function KasFisikPage() {
     return init;
   });
   const [saving, setSaving] = React.useState(false);
-
-  React.useEffect(() => {
-    const init: Record<string, number> = {};
-    for (const r of stockRows) init[r.denominationId] = r.quantity;
-    setDraft(init);
-  }, [state]);
 
   const handleChange = (id: string, qty: number) => {
     setDraft((prev) => ({ ...prev, [id]: qty }));

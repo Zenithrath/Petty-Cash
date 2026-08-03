@@ -83,7 +83,7 @@ export function StockInput({
                   <td className="px-3 py-1.5 font-medium text-slate-800">
                     Rp {formatNumber(row.value)}
                     <span className="ml-1.5 text-[11px] uppercase text-slate-400">
-                      {row.value >= 1000 ? "lembar" : "koin"}
+                      {row.type === "lembar" ? "lembar" : "koin"}
                     </span>
                   </td>
                   {showStock && (

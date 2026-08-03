@@ -58,7 +58,9 @@ export function RupiahInput({
         onChange={(e) => {
           const raw = e.target.value.replace(/\D/g, "").slice(0, 14);
           const num = raw ? parseInt(raw, 10) : 0;
-          setDisplay(raw ? formatNumber(num) : "");
+          if (focused.current) {
+            setDisplay(raw);
+          }
           onChange(num);
         }}
         className={cn(

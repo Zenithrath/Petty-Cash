@@ -357,11 +357,12 @@ export async function hydrate() {
     supabase.from("kas_fisik").select("*"),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function pickData(res: PromiseSettledResult<any>): any[] {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  function pickData(res: PromiseSettledResult<{ data: any[] | null }>): any[] {
     if (res.status === "rejected") return [];
-    return (res.value?.data ?? []) as any[];
+    return res.value?.data ?? [];
   }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const profilesData = pickData(profilesRes);
   const employeesData = pickData(employeesRes);
