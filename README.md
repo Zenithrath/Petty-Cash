@@ -23,23 +23,13 @@ Dashboard web untuk pencatatan arus kas kecil koperasi. Mendukung input transaks
 
 ## 🖼️ Preview
 
-```
-┌─────────────────────────────────────────┐
-│  KOPKAR MAJU          [Arka] [v]        │
-├──────────┬──────────────────────────────┤
-│ Dashboard│  Saldo Kas    Total Keluar   │
-│ Pencatan │  Rp 5.000.000  Rp 2.000.000  │
-│ Kas Fisik│                              │
-│ Master   │  Pencatatan Terbaru          │
-│ Admin    │  ┌──────┬──────┬──────────┐  │
-│          │  │ Tgl  │ Nom  │ Ket      │  │
-│          │  ├──────┼──────┼──────────┤  │
-│          │  │ 03/08│ +50K │ Pinjaman │  │
-│          │  └──────┴──────┴──────────┘  │
-└──────────┴──────────────────────────────┘
-```
+### Login
 
-> [Tambahkan screenshot asli di sini]
+![Login Page](screenshots/login.png)
+
+### Dashboard
+
+![Dashboard](screenshots/dashboard.png)
 
 ---
 
@@ -59,18 +49,18 @@ Dashboard web untuk pencatatan arus kas kecil koperasi. Mendukung input transaks
 
 ## 🛠️ Tech Stack
 
-| Komponen | Teknologi |
-|---|---|
-| Framework | Next.js 16 (App Router + Turbopack) |
-| UI Library | React 19 |
-| Bahasa | TypeScript 5 |
-| Styling | Tailwind CSS 4 |
-| Icons | Lucide React |
-| Database | PostgreSQL (Supabase Cloud) |
-| Auth | Supabase Auth + RLS |
-| State | Custom store (`useSyncExternalStore`) |
-| Export | ExcelJS (dynamic import) |
-| Forms | React Hook Form + Zod |
+| Komponen   | Teknologi                             |
+| ---------- | ------------------------------------- |
+| Framework  | Next.js 16 (App Router + Turbopack)   |
+| UI Library | React 19                              |
+| Bahasa     | TypeScript 5                          |
+| Styling    | Tailwind CSS 4                        |
+| Icons      | Lucide React                          |
+| Database   | PostgreSQL (Supabase Cloud)           |
+| Auth       | Supabase Auth + RLS                   |
+| State      | Custom store (`useSyncExternalStore`) |
+| Export     | ExcelJS (dynamic import)              |
+| Forms      | React Hook Form + Zod                 |
 
 ---
 
@@ -185,15 +175,15 @@ npm start
 
 ## 🌐 Daftar Halaman
 
-| Route | Keterangan | Akses |
-|---|---|---|
-| `/login` | Halaman masuk | Publik |
-| `/register` | Halaman daftar | Publik |
-| `/dashboard` | Dashboard utama | Login |
-| `/dashboard/list` | Pencatatan kas (in/out) | Login |
-| `/dashboard/kas-fisik` | Edit kas fisik | Login |
-| `/dashboard/master-data` | Kelola anggota & kategori | Login |
-| `/dashboard/admin/users` | Kelola akun pengguna | Superadmin |
+| Route                    | Keterangan                | Akses      |
+| ------------------------ | ------------------------- | ---------- |
+| `/login`                 | Halaman masuk             | Publik     |
+| `/register`              | Halaman daftar            | Publik     |
+| `/dashboard`             | Dashboard utama           | Login      |
+| `/dashboard/list`        | Pencatatan kas (in/out)   | Login      |
+| `/dashboard/kas-fisik`   | Edit kas fisik            | Login      |
+| `/dashboard/master-data` | Kelola anggota & kategori | Login      |
+| `/dashboard/admin/users` | Kelola akun pengguna      | Superadmin |
 
 ---
 
@@ -221,24 +211,24 @@ flowchart TD
 <details>
 <summary>📊 Desktop — /dashboard</summary>
 
-| Kategori | Skor |
-|---|---:|
-| Performance | 94 |
-| Accessibility | 94 |
-| Best Practices | 100 |
-| SEO | 100 |
+| Kategori       | Skor |
+| -------------- | ---: |
+| Performance    |   94 |
+| Accessibility  |   94 |
+| Best Practices |  100 |
+| SEO            |  100 |
 
 </details>
 
 <details>
 <summary>📱 Mobile — /dashboard/list</summary>
 
-| Kategori | Skor |
-|---|---:|
-| Performance | 67 |
-| Accessibility | 97 |
-| Best Practices | 96 |
-| SEO | 100 |
+| Kategori       | Skor |
+| -------------- | ---: |
+| Performance    |   67 |
+| Accessibility  |   97 |
+| Best Practices |   96 |
+| SEO            |  100 |
 
 **Catatan:** Performa mobile masih perlu optimasi (JavaScript execution time, TBT).
 
@@ -248,12 +238,12 @@ flowchart TD
 
 ## ♿ Hasil Audit WAVE
 
-| Item | Hasil |
-|---|---:|
-| Errors | 0 |
-| Contrast Errors | 0 |
-| Alerts | 4 |
-| AIM Score | 9.9 / 10 |
+| Item            |    Hasil |
+| --------------- | -------: |
+| Errors          |        0 |
+| Contrast Errors |        0 |
+| Alerts          |        4 |
+| AIM Score       | 9.9 / 10 |
 
 **Status:** Tidak ditemukan error. Alert yang ada bersifat ringan (heading level, redundant link, small text).
 
